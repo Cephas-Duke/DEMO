@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assets Manager | Heriwadi Schools (Portfolio Ver.)</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* PRESERVED ORIGINAL STYLES */
+    :root {
+      --primary-color: #0077cc;
+      --secondary-color: #005fa3;
+      --accent-color: #ff6b00;
+      --light-gray: #f4f4f4;
+      --medium-gray: #e0e0e0;
+      --dark-gray: #333;
+      --white: #ffffff;
+      --success-color: #28a745;
+      --error-color: #dc3545;
+      --warning-color: #ffc107;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--light-gray); color: var(--dark-gray); line-height: 1.6; padding-top: 70px; }
+
+    /* Loading Screen */
+    .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.5s ease; }
+    .loading-screen.hidden { opacity: 0; pointer-events: none; }
+    .loading-spinner { width: 50px; height: 50px; border: 5px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; margin-top: 15px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Top Navigation Bar */
+    .top-nav { position: fixed; top: 0; left: 0; right: 0; background: var(--primary-color); color: var(--white); padding: 0 20px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); z-index: 1000; display: flex; justify-content: space-between; align-items: center; height: 70px; }
+    .school-name { font-size: 20px; font-weight: bold; }
+    .nav-menu { display: flex; list-style: none; height: 100%; }
+    .nav-item { display: flex; align-items: center; }
+    .nav-link { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 15px; color: var(--white); text-decoration: none; height: 100%; min-width: 80px; transition: all 0.3s ease; position: relative; }
+    .nav-link:hover { background-color: rgba(255, 255, 255, 0.1); }
+    .nav-link.active { background-color: rgba(255, 255, 255, 0.2); }
+    .nav-link.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background-color: var(--white); }
+    .nav-icon { font-size: 20px; margin-bottom: 5px; }
+    .nav-text { font-size: 12px; }
+
+    /* Main content area */
+    .main-content { padding: 30px; max-width: 1400px; margin: 0 auto; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid var(--medium-gray); }
+    .page-title { font-size: 24px; color: var(--primary-color); }
+
+    /* Form styling */
+    .card { background: var(--white); border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); padding: 25px; margin-bottom: 30px; }
+    .card-title { font-size: 18px; margin-bottom: 20px; color: var(--primary-color); padding-bottom: 10px; border-bottom: 1px solid var(--medium-gray); }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark-gray); }
+    .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--medium-gray); border-radius: 4px; font-size: 14px; transition: border-color 0.3s; }
+    .form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(0, 119, 204, 0.2); }
+    .form-control[readonly] { background-color: var(--light-gray); }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    .btn-primary { background-color: var(--primary-color); color: var(--white); }
+    .btn-primary:hover { background-color: var(--secondary-color); }
+    .btn-secondary { background-color: var(--medium-gray); color: var(--dark-gray); }
+    .btn-secondary:hover { background-color: #d0d0d0; }
+    .btn-success { background-color: var(--success-color); color: var(--white); }
+    .btn-danger { background-color: var(--error-color); color: var(--white); }
+    .btn-icon { margin-right: 8px; }
+
+    /* Tools section */
+    .tools-section { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; }
+    .file-input-wrapper input[type="file"] { position: absolute; font-size: 100px; opacity: 0; right: 0; top: 0; cursor: pointer; }
+
+    /* Table styling */
+    .table-responsive { overflow-x: auto; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+    .table th { background-color: var(--primary-color); color: var(--white); padding: 12px 15px; text-align: left; font-weight: 600; }
+    .table td { padding: 12px 15px; border-bottom: 1px solid var(--medium-gray); vertical-align: middle; }
+    .table tr:hover { background-color: rgba(0, 119, 204, 0.05); }
+    .table .actions { display: flex; gap: 5px; }
+    .table .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    /* Status messages */
+    .alert { padding: 12px 15px; margin-bottom: 20px; border-radius: 4px; font-weight: 500; }
+    .alert-success { background-color: rgba(40, 167, 69, 0.2); color: var(--success-color); border-left: 4px solid var(--success-color); }
+    .alert-error { background-color: rgba(220, 53, 69, 0.2); color: var(--error-color); border-left: 4px solid var(--error-color); }
+    .alert-info { background-color: rgba(0, 119, 204, 0.2); color: var(--primary-color); border-left: 4px solid var(--primary-color); }
+
+    @media (max-width: 992px) { .nav-text { display: none; } }
+    @media (max-width: 768px) { body { padding-top: 60px; } .top-nav { height: 60px; } .main-content { padding: 15px; } .form-grid { grid-template-columns: 1fr; } .tools-section { flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <div class="loading-screen" id="loadingScreen">
+    <div style="font-size: 2rem; background: rgba(255,255,255,0.2); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+      <i class="fas fa-laptop-house"></i>
+    </div>
+    <div style="margin-top: 1rem; font-size: 1.2rem;">Loading Asset Register...</div>
+    <div class="loading-spinner"></div>
+  </div>
+
+  <nav class="top-nav">
+    <div class="school-name">Heriwadi Christian Schools Ltd</div>
+    <ul class="nav-menu">
+      <li class="nav-item"><a href="index.html" class="nav-link"><i class="fas fa-tachometer-alt nav-icon"></i><span class="nav-text">Dashboard</span></a></li>
+      <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-receipt nav-icon"></i><span class="nav-text">Receipts</span></a></li>
+      <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-money-bill-wave nav-icon"></i><span class="nav-text">Expenses</span></a></li>
+      <li class="nav-item"><a href="#" class="nav-link active"><i class="fas fa-laptop-house nav-icon"></i><span class="nav-text">Assets</span></a></li>
+      <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-chalkboard-teacher nav-icon"></i><span class="nav-text">Staff</span></a></li>
+      <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-user-graduate nav-icon"></i><span class="nav-text">Students</span></a></li>
+      <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-money-check-alt nav-icon"></i><span class="nav-text">Payroll</span></a></li>
+      <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-chart-line nav-icon"></i><span class="nav-text">Financials</span></a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title"><i class="fas fa-laptop-house btn-icon"></i> Asset Register (Demo)</h1>
+      <div class="tools-section">
+        <button class="btn btn-success" onclick="exportAssetsToExcel()"><i class="fas fa-file-excel btn-icon"></i> Export</button>
+        <button class="btn btn-secondary" onclick="window.print()"><i class="fas fa-print btn-icon"></i> Print</button>
+        <button class="btn btn-primary" onclick="backupAssets()"><i class="fas fa-download btn-icon"></i> Backup</button>
+        <div class="file-input-wrapper">
+          <button class="btn btn-primary"><i class="fas fa-upload btn-icon"></i> Restore</button>
+          <input type="file" id="restoreFile" onchange="restoreAssets(event)" />
+        </div>
+      </div>
+    </div>
+
+    <div id="statusMessages"></div>
+
+    <div class="card asset-form">
+      <h2 class="card-title"><i class="fas fa-plus-circle btn-icon"></i> Add New Asset</h2>
+      <form id="assetForm" class="form-grid">
+        <div class="form-group"><label>Item Description</label><input type="text" id="description" class="form-control" required /></div>
+        <div class="form-group"><label>Date of Acquisition</label><input type="date" id="acquisitionDate" class="form-control" required /></div>
+        <div class="form-group"><label>Serial No.</label><input type="text" id="serialNo" class="form-control" /></div>
+        <div class="form-group"><label>Supplier</label><input type="text" id="supplier" class="form-control" /></div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="category" class="form-control" required>
+            <option value="">Select Category</option><option value="Furniture">Furniture</option>
+            <option value="Electronics">Electronics</option><option value="IT Equipment">IT Equipment</option>
+            <option value="Vehicles">Vehicles</option><option value="Stationery">Stationery</option><option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Quantity</label><input type="number" id="quantity" class="form-control" required min="1" oninput="updateAmount()" /></div>
+        <div class="form-group"><label>Unit Cost (KES)</label><input type="number" id="unitCost" class="form-control" required min="0" step="0.01" oninput="updateAmount()" /></div>
+        <div class="form-group"><label>Amount (KES)</label><input type="number" id="amount" class="form-control" readonly /></div>
+        <div class="form-group"><label>Useful Life (Years)</label><input type="number" id="usefulLife" class="form-control" min="1" /></div>
+        <div class="form-group">
+          <button type="submit" class="btn btn-primary" id="submitBtn" style="grid-column: 1 / -1;"><i class="fas fa-save btn-icon"></i> Save Asset</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title"><i class="fas fa-list btn-icon"></i> Asset Records</h2>
+      <div class="table-responsive">
+        <table class="table" id="assetTable">
+          <thead>
+            <tr><th>Description</th><th>Serial No</th><th>Supplier</th><th>Category</th><th>Qty</th><th>Unit Cost</th><th>Amount</th><th>Date</th><th>Life (yrs)</th><th>Actions</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // --- MOCK DATA SYSTEM ---
+    let mockAssets = [];
+    let editingId = null;
+
+    // Generate realistic school assets
+    function initMockData() {
+        const suppliers = ["Office Mart", "Toyota Kenya", "Furniture Palace", "Text Book Centre", "Hotpoint Appliances"];
+        const today = new Date();
+        
+        // 1. IT Equipment
+        for(let i=1; i<=15; i++) {
+            mockAssets.push(createAsset(`HP ProBook 450 G${Math.floor(Math.random()*5)+5}`, "IT Equipment", 1, 65000, 3));
+        }
+        mockAssets.push(createAsset("Epson Projector EB-X06", "IT Equipment", 2, 45000, 5));
+        
+        // 2. Furniture
+        mockAssets.push(createAsset("Student Desk (Wooden)", "Furniture", 150, 3500, 10));
+        mockAssets.push(createAsset("Staff Office Chair", "Furniture", 20, 8500, 7));
+        mockAssets.push(createAsset("Library Bookshelf", "Furniture", 8, 12000, 15));
+        
+        // 3. Vehicles
+        mockAssets.push(createAsset("School Bus (52 Seater)", "Vehicles", 1, 5500000, 15, "Isuzu EA"));
+        
+        // 4. Electronics
+        mockAssets.push(createAsset("Samsung Smart TV 55\"", "Electronics", 2, 60000, 5));
+        mockAssets.push(createAsset("Water Dispenser", "Electronics", 3, 15000, 4));
+        
+        // Sort by date (newest first)
+        mockAssets.sort((a,b) => new Date(b.acquisitionDate) - new Date(a.acquisitionDate));
+    }
+
+    function createAsset(desc, cat, qty, cost, life, supp) {
+        const suppliers = ["Office Mart", "Nairobi Furniture", "Text Book Centre", "Hotpoint"];
+        const date = new Date(Date.now() - Math.floor(Math.random() * 1000 * 86400000)).toISOString().split('T')[0]; // Random date in last ~3 years
+        return {
+            id: `AST-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+            description: desc,
+            acquisitionDate: date,
+            serialNo: cat === "IT Equipment" || cat === "Vehicles" ? `SN${Math.floor(Math.random()*1000000)}` : "",
+            supplier: supp || suppliers[Math.floor(Math.random() * suppliers.length)],
+            category: cat,
+            quantity: qty,
+            unitCost: cost,
+            amount: qty * cost,
+            usefulLife: life,
+            createdAt: new Date().toISOString()
+        };
+    }
+
+    // --- APP LOGIC ---
+
+    function showStatus(message, type = 'info') {
+      const statusDiv = document.createElement('div');
+      statusDiv.className = `alert alert-${type}`;
+      statusDiv.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
+      const container = document.getElementById('statusMessages');
+      container.insertBefore(statusDiv, container.firstChild);
+      setTimeout(() => statusDiv.remove(), 4000);
+    }
+
+    function updateAmount() {
+      const quantity = parseFloat(document.getElementById("quantity").value) || 0;
+      const unitCost = parseFloat(document.getElementById("unitCost").value) || 0;
+      document.getElementById("amount").value = (quantity * unitCost).toFixed(2);
+    }
+
+    function renderAssets() {
+      const tbody = document.querySelector("#assetTable tbody");
+      tbody.innerHTML = "";
+      
+      if (mockAssets.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 20px;">No assets found. Add your first asset above.</td></tr>`;
+        return;
+      }
+      
+      mockAssets.forEach(a => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${a.description}</td>
+          <td>${a.serialNo || '-'}</td>
+          <td>${a.supplier || '-'}</td>
+          <td>${a.category}</td>
+          <td>${a.quantity}</td>
+          <td>KES ${a.unitCost.toLocaleString()}</td>
+          <td>KES ${a.amount.toLocaleString()}</td>
+          <td>${new Date(a.acquisitionDate).toLocaleDateString()}</td>
+          <td>${a.usefulLife || '-'}</td>
+          <td class="actions">
+            <button class="btn btn-secondary btn-sm" onclick="editAsset('${a.id}')"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deleteAsset('${a.id}')"><i class="fas fa-trash"></i></button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Form Submit (Add/Update)
+    document.getElementById("assetForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+      
+      setTimeout(() => {
+        const qty = parseInt(document.getElementById("quantity").value);
+        const cost = parseFloat(document.getElementById("unitCost").value);
+        
+        const assetData = {
+            id: editingId || `AST-${Date.now()}`,
+            description: document.getElementById("description").value,
+            acquisitionDate: document.getElementById("acquisitionDate").value,
+            serialNo: document.getElementById("serialNo").value,
+            supplier: document.getElementById("supplier").value,
+            category: document.getElementById("category").value,
+            quantity: qty,
+            unitCost: cost,
+            amount: qty * cost,
+            usefulLife: parseInt(document.getElementById("usefulLife").value) || null,
+            createdAt: new Date().toISOString()
+        };
+
+        if (editingId) {
+            const idx = mockAssets.findIndex(a => a.id === editingId);
+            if(idx !== -1) mockAssets[idx] = assetData;
+            showStatus("Asset updated successfully", "success");
+            btn.innerHTML = '<i class="fas fa-save btn-icon"></i> Save Asset';
+            editingId = null;
+        } else {
+            mockAssets.unshift(assetData);
+            showStatus("Asset added successfully", "success");
+            btn.innerHTML = '<i class="fas fa-save btn-icon"></i> Save Asset';
+        }
+
+        this.reset();
+        document.getElementById("acquisitionDate").value = new Date().toISOString().split('T')[0];
+        renderAssets();
+      }, 600);
+    });
+
+    function editAsset(id) {
+        const asset = mockAssets.find(a => a.id === id);
+        if(asset) {
+            editingId = id;
+            document.getElementById("description").value = asset.description;
+            document.getElementById("acquisitionDate").value = asset.acquisitionDate;
+            document.getElementById("serialNo").value = asset.serialNo;
+            document.getElementById("supplier").value = asset.supplier;
+            document.getElementById("category").value = asset.category;
+            document.getElementById("quantity").value = asset.quantity;
+            document.getElementById("unitCost").value = asset.unitCost;
+            document.getElementById("amount").value = asset.amount;
+            document.getElementById("usefulLife").value = asset.usefulLife;
+            
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save btn-icon"></i> Update Asset';
+            document.querySelector('.asset-form').scrollIntoView({ behavior: 'smooth' });
+            showStatus("Editing asset...", "info");
+        }
+    }
+
+    function deleteAsset(id) {
+        if(confirm("Delete this asset? (Demo)")) {
+            mockAssets = mockAssets.filter(a => a.id !== id);
+            renderAssets();
+            showStatus("Asset deleted", "success");
+        }
+    }
+
+    // --- Tools (Export/Backup) ---
+
+    function exportAssetsToExcel() {
+        showStatus("Exporting CSV...", "info");
+        setTimeout(() => {
+            let csv = "Description,Serial No,Supplier,Category,Quantity,Unit Cost,Amount,Date Acquired,Useful Life\n";
+            mockAssets.forEach(a => {
+                csv += `"${a.description}","${a.serialNo||''}","${a.supplier||''}","${a.category}",${a.quantity},${a.unitCost},${a.amount},"${a.acquisitionDate}",${a.usefulLife||''}\n`;
+            });
+            const blob = new Blob([csv], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Assets_Export_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            showStatus("Export complete", "success");
+        }, 1000);
+    }
+
+    function backupAssets() {
+        const blob = new Blob([JSON.stringify(mockAssets, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Assets_Backup_Demo.json`;
+        a.click();
+        showStatus("Backup downloaded", "success");
+    }
+
+    function restoreAssets(event) {
+        const file = event.target.files[0];
+        if(!file) return;
+        showStatus("Simulating restore...", "info");
+        setTimeout(() => {
+            showStatus("Restore successful (Demo)", "success");
+            event.target.value = '';
+        }, 1500);
+    }
+
+    // Init
+    window.onload = function() {
+        initMockData();
+        renderAssets();
+        document.getElementById("acquisitionDate").value = new Date().toISOString().split('T')[0];
+        setTimeout(() => document.getElementById('loadingScreen').classList.add('hidden'), 800);
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payroll Management | Heriwadi Schools (Portfolio Ver.)</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #0077cc;
+      --secondary-color: #005fa3;
+      --accent-color: #ff6b00;
+      --light-gray: #f4f4f4;
+      --medium-gray: #e0e0e0;
+      --dark-gray: #333;
+      --white: #ffffff;
+      --success-color: #28a745;
+      --error-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--light-gray); color: var(--dark-gray); line-height: 1.6; padding-top: 70px; }
+
+    /* Portfolio Loading Screen */
+    .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.5s ease; }
+    .loading-screen.hidden { opacity: 0; pointer-events: none; }
+    .spinner { width: 50px; height: 50px; border: 5px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; margin-bottom: 20px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Navigation */
+    .top-nav { position: fixed; top: 0; left: 0; right: 0; background: var(--primary-color); color: var(--white); padding: 0 20px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); z-index: 1000; display: flex; justify-content: space-between; align-items: center; height: 70px; }
+    .school-name { font-size: 20px; font-weight: bold; }
+    .nav-menu { display: flex; list-style: none; height: 100%; }
+    .nav-link { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 15px; color: var(--white); text-decoration: none; height: 100%; transition: 0.3s; }
+    .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.15); }
+
+    /* Content */
+    .main-content { padding: 30px; max-width: 1200px; margin: 0 auto; }
+    .card { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 25px; }
+    .card-title { font-size: 1.2rem; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+
+    /* Form & Controls */
+    .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+    .form-control:focus { border-color: var(--primary-color); outline: none; }
+    
+    .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: 0.3s; }
+    .btn-primary { background: var(--primary-color); color: white; }
+    .btn-success { background: var(--success-color); color: white; }
+    .btn-info { background: var(--info-color); color: white; }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* Table */
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { background: #f8f9fa; padding: 12px; text-align: left; font-size: 0.85rem; border-bottom: 2px solid #eee; }
+    td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+
+    /* Alert */
+    #statusMsg { position: fixed; top: 85px; right: 20px; z-index: 1001; padding: 15px 25px; border-radius: 4px; color: white; display: none; animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  </style>
+</head>
+<body>
+
+  <div class="loading-screen" id="loadingScreen">
+    <div class="spinner"></div>
+    <p>Loading Payroll Engine...</p>
+  </div>
+
+  <nav class="top-nav">
+    <div class="school-name">Heriwadi Christian Schools</div>
+    <ul class="nav-menu">
+      <li><a href="index.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a></li>
+      <li><a href="staff.html" class="nav-link"><i class="fas fa-users"></i> Staff</a></li>
+      <li><a href="#" class="nav-link active"><i class="fas fa-money-check-alt"></i> Payroll</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    <div id="statusMsg"></div>
+
+    <div class="card">
+      <div class="card-title"><i class="fas fa-cog"></i> Payroll Settings</div>
+      <div class="controls-grid">
+        <div class="form-group">
+          <label>Select Month</label>
+          <select id="monthSelect" class="form-control" onchange="loadPayroll()">
+            <option>January</option><option>February</option><option selected>March</option>
+            <option>April</option><option>May</option><option>June</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Select Year</label>
+          <select id="yearSelect" class="form-control" onchange="loadPayroll()">
+            <option>2024</option><option selected>2025</option><option>2026</option>
+          </select>
+        </div>
+        <div style="display: flex; align-items: flex-end; padding-bottom: 15px;">
+          <button class="btn btn-info" onclick="exportLedger()"><i class="fas fa-file-pdf"></i> Download Salary Ledger</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fas fa-plus-circle"></i> Process Salary</div>
+      <form id="payrollForm" class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+        <div class="form-group">
+          <label>Staff Name</label>
+          <input type="text" id="staffName" class="form-control" placeholder="Search staff..." required>
+        </div>
+        <div class="form-group">
+          <label>Gross Salary (KES)</label>
+          <input type="number" id="grossSalary" class="form-control" required oninput="calculateNet()">
+        </div>
+        <div class="form-group">
+          <label>Advance/Deductions</label>
+          <input type="number" id="deductions" class="form-control" value="0" oninput="calculateNet()">
+        </div>
+        <div class="form-group">
+          <label>Net Pay (Auto)</label>
+          <input type="text" id="netPay" class="form-control" readonly style="background: #f0f0f0; font-weight: bold;">
+        </div>
+        <div style="display: flex; align-items: flex-end; padding-bottom: 15px;">
+          <button type="submit" class="btn btn-success"><i class="fas fa-check-double"></i> Confirm Payment</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fas fa-list"></i> Payroll History for <span id="displayPeriod">March 2025</span></div>
+      <div class="table-responsive">
+        <table id="payrollTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Staff Member</th>
+              <th>Gross</th>
+              <th>Deductions</th>
+              <th>Net Pay</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let payrollData = [];
+    const taxConfig = { nssf: 1080, nhif: 950 };
+
+    function showStatus(msg, type) {
+      const el = document.getElementById('statusMsg');
+      el.textContent = msg;
+      el.style.background = type === 'success' ? '#28a745' : '#dc3545';
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 3000);
+    }
+
+    function calculateNet() {
+      const gross = parseFloat(document.getElementById('grossSalary').value) || 0;
+      const other = parseFloat(document.getElementById('deductions').value) || 0;
+      
+      // Simple Mock Kenyan Tax Logic
+      let paye = gross > 24000 ? (gross - 24000) * 0.25 : 0;
+      const net = gross - (taxConfig.nssf + taxConfig.nhif + paye + other);
+      
+      document.getElementById('netPay').value = net > 0 ? net.toLocaleString() : 0;
+      return { gross, other, paye, net };
+    }
+
+    function loadPayroll() {
+      const m = document.getElementById('monthSelect').value;
+      const y = document.getElementById('yearSelect').value;
+      document.getElementById('displayPeriod').textContent = `${m} ${y}`;
+      
+      // Load mock history
+      const tbody = document.querySelector('#payrollTable tbody');
+      tbody.innerHTML = '';
+      
+      payrollData.forEach((row, index) => {
+        if(row.month === m && row.year === y) {
+          tbody.innerHTML += `
+            <tr>
+              <td>${row.date}</td>
+              <td><strong>${row.name}</strong></td>
+              <td>${row.gross.toLocaleString()}</td>
+              <td>${row.totalDeductions.toLocaleString()}</td>
+              <td style="color:var(--primary-color); font-weight:bold;">KES ${row.net.toLocaleString()}</td>
+              <td>
+                <button class="btn btn-info btn-sm" onclick="printPayslip(${index})" style="padding:5px 10px; font-size:12px;"><i class="fas fa-print"></i> Payslip</button>
+              </td>
+            </tr>
+          `;
+        }
+      });
+    }
+
+    document.getElementById('payrollForm').onsubmit = (e) => {
+      e.preventDefault();
+      const vals = calculateNet();
+      const entry = {
+        name: document.getElementById('staffName').value,
+        gross: vals.gross,
+        net: vals.net,
+        totalDeductions: vals.other + vals.paye + taxConfig.nhif + taxConfig.nssf,
+        date: new Date().toLocaleDateString(),
+        month: document.getElementById('monthSelect').value,
+        year: document.getElementById('yearSelect').value
+      };
+
+      payrollData.unshift(entry);
+      showStatus("Salary Processed Successfully", "success");
+      e.target.reset();
+      loadPayroll();
+    };
+
+    function printPayslip(index) {
+      const data = payrollData[index];
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(20);
+      doc.text("Heriwadi Christian Schools Ltd", 105, 20, { align: "center" });
+      doc.setFontSize(12);
+      doc.text("PAY ADVICE / PAYSLIP", 105, 30, { align: "center" });
+      
+      doc.line(20, 35, 190, 35);
+      doc.text(`Staff Name: ${data.name}`, 20, 45);
+      doc.text(`Period: ${data.month} ${data.year}`, 150, 45);
+
+      const tableBody = [
+        ["Basic / Gross Salary", data.gross.toLocaleString()],
+        ["NSSF (Deduction)", taxConfig.nssf.toLocaleString()],
+        ["NHIF (Deduction)", taxConfig.nhif.toLocaleString()],
+        ["Other Deductions", (data.totalDeductions - taxConfig.nssf - taxConfig.nhif).toLocaleString()],
+        ["NET SALARY PAYABLE", `KES ${data.net.toLocaleString()}`]
+      ];
+
+      doc.autoTable({
+        startY: 55,
+        head: [['Description', 'Amount (KES)']],
+        body: tableBody,
+        theme: 'grid',
+        headStyles: { fillColor: [0, 119, 204] }
+      });
+
+      doc.text("Authorized Signature: ____________________", 20, 150);
+      doc.save(`Payslip_${data.name}_${data.month}.pdf`);
+    }
+
+    function exportLedger() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text("Monthly Payroll Ledger", 105, 20, { align: "center" });
+      
+      const rows = payrollData.map(d => [d.date, d.name, d.gross, d.net]);
+      doc.autoTable({
+        startY: 30,
+        head: [['Date', 'Staff', 'Gross', 'Net']],
+        body: rows
+      });
+      doc.save("Payroll_Ledger.pdf");
+    }
+
+    window.onload = () => {
+      // Create some fake data
+      payrollData.push({name: "Jane Doe (Head Teacher)", gross: 45000, net: 38500, totalDeductions: 6500, date: "01/03/2025", month: "March", year: "2025"});
+      payrollData.push({name: "John Smith (Accountant)", gross: 35000, net: 29800, totalDeductions: 5200, date: "01/03/2025", month: "March", year: "2025"});
+      
+      loadPayroll();
+      setTimeout(() => document.getElementById('loadingScreen').classList.add('hidden'), 800);
+    };
+  </script>
+</body>
+</html>

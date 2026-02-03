@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expenses Manager | Heriwadi Schools (Portfolio Ver.)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* PRESERVED STYLES */
+    :root {
+      --primary-color: #005fa3;
+      --secondary-color: #004080;
+      --accent-color: #00a8e8;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ff9800;
+      --info-color: #17a2b8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --border-radius: 8px;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Roboto', sans-serif; background-color: #f5f7fa; color: #333; line-height: 1.6; }
+
+    /* Loading Screen */
+    .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.5s ease; }
+    .loading-screen.hidden { opacity: 0; pointer-events: none; }
+    .loading-spinner-large { width: 50px; height: 50px; border: 5px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; margin-top: 15px; }
+
+    header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 1.5rem; text-align: center; box-shadow: var(--box-shadow); }
+    nav { background: var(--secondary-color); padding: 0.75rem 1.5rem; }
+    nav ul { list-style: none; display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; }
+    nav ul li a { color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: var(--border-radius); transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; }
+    nav ul li a:hover { background: var(--accent-color); }
+    nav ul li a.active { background: var(--accent-color); font-weight: bold; }
+
+    .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+
+    .control-panel { display: flex; justify-content: space-between; align-items: center; background: white; padding: 1rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow); margin-bottom: 1.5rem; }
+    .year-select-container { display: flex; align-items: center; gap: 0.5rem; background: var(--primary-color); padding: 0.5rem 1rem; border-radius: var(--border-radius); color: white; }
+    .year-select-container select { border: none; background: white; padding: 0.3rem 0.8rem; border-radius: 4px; font-weight: bold; color: var(--primary-color); cursor: pointer; outline: none; }
+
+    .card { background: white; border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: 1.5rem; margin-bottom: 1.5rem; transition: var(--transition); }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid #eee; }
+    .card-title { font-size: 1.5rem; color: var(--primary-color); margin: 0; }
+
+    .btn { padding: 0.5rem 1rem; border: none; border-radius: var(--border-radius); background: var(--primary-color); color: white; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-success { background: var(--success-color); }
+    .btn-danger { background: var(--danger-color); }
+    .btn-warning { background: var(--warning-color); color: var(--dark-color); }
+    .btn-info { background: var(--info-color); }
+    .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.85rem; }
+    .btn-group { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--dark-color); }
+    input, select { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: var(--border-radius); font-size: 1rem; transition: var(--transition); }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.2); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+    .search-container { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .search-box { position: relative; flex: 1; min-width: 250px; }
+    .search-box input { padding-left: 2.5rem; }
+    .search-box i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #777; }
+    .filter-select { min-width: 200px; }
+
+    .status-message { padding: 0.75rem 1rem; border-radius: var(--border-radius); margin-bottom: 1rem; font-weight: 500; display: none; }
+    .status-message.show { display: block; animation: fadeIn 0.5s; }
+    .status-message.success { background-color: rgba(40, 167, 69, 0.1); color: var(--success-color); border-left: 4px solid var(--success-color); }
+    .status-message.info { background-color: rgba(23, 162, 184, 0.1); color: var(--info-color); border-left: 4px solid var(--info-color); }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.95rem; }
+    th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
+    th { background-color: var(--primary-color); color: white; font-weight: 500; position: sticky; top: 0; }
+    tr:hover { background-color: #f8f9fa; }
+
+    .term-navigator { background: white; border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: 1.5rem; margin-bottom: 1.5rem; }
+    .term-tabs { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .term-tab { padding: 0.75rem 1.5rem; background: #f8f9fa; border: 1px solid #ddd; border-radius: var(--border-radius); cursor: pointer; transition: var(--transition); font-weight: 500; position: relative; }
+    .term-tab.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+    .term-tab .badge { background: var(--accent-color); color: white; padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.75rem; margin-left: 0.5rem; position: absolute; top: -5px; right: -5px; }
+    .term-tab.active .badge { background: white; color: var(--primary-color); }
+
+    .term-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .term-stat { background: #f8f9fa; padding: 1rem; border-radius: var(--border-radius); text-align: center; }
+    .term-stat h4 { color: var(--primary-color); margin-bottom: 0.5rem; }
+    .term-stat .value { font-size: 1.25rem; font-weight: bold; color: var(--dark-color); }
+
+    .term-section { margin-bottom: 2rem; }
+    .term-header { background-color: var(--secondary-color); color: white; padding: 0.75rem 1rem; border-radius: var(--border-radius) var(--border-radius) 0 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .term-header .badge { background: white; color: var(--primary-color); padding: 0.25rem 0.5rem; border-radius: 1rem; font-size: 0.85rem; font-weight: bold; }
+    
+    .category-section { margin-bottom: 1rem; }
+    .category-header { background-color: var(--primary-color); color: white; padding: 0.75rem 1rem; border-radius: var(--border-radius) var(--border-radius) 0 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .category-header .badge { background: white; color: var(--primary-color); padding: 0.25rem 0.5rem; border-radius: 1rem; font-size: 0.85rem; font-weight: bold; }
+    .class-content { border: 1px solid #ddd; border-top: none; border-radius: 0 0 var(--border-radius) var(--border-radius); overflow: hidden; overflow-x: auto; }
+    
+    .total-row { font-weight: bold; background-color: #f0f0f0; }
+
+    .chart-container { margin: 2rem 0; position: relative; height: 400px; }
+    .chart-card { background: white; border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: 1.5rem; margin-bottom: 1.5rem; }
+    .chart-title { font-size: 1.2rem; color: var(--primary-color); margin-bottom: 1rem; text-align: center; }
+    
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin: 1.5rem 0; }
+    .summary-card { background: white; border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: 1.5rem; text-align: center; }
+    .summary-card h3 { color: var(--primary-color); margin-bottom: 1rem; }
+    .summary-card .amount { font-size: 1.5rem; font-weight: bold; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @media (max-width: 768px) { .control-panel { flex-direction: column; gap: 10px; } .term-tabs { flex-direction: column; } .chart-container { height: 300px; } }
+  </style>
+</head>
+<body>
+  <div class="loading-screen" id="loadingScreen">
+    <div style="font-size: 2rem; background: rgba(255,255,255,0.2); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+      <i class="fas fa-money-bill-wave"></i>
+    </div>
+    <div style="margin-top: 1rem; font-size: 1.2rem;">Loading Expenses Manager...</div>
+    <div class="loading-spinner-large"></div>
+  </div>
+
+  <header>
+    <h1>Heriwadi Christian Schools Ltd</h1>
+    <nav>
+      <ul>
+        <li><a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="students.html"><i class="fas fa-users"></i> Students</a></li>
+        <li><a href="receipts.html"><i class="fas fa-receipt"></i> Receipts</a></li>
+        <li><a href="#" class="active"><i class="fas fa-money-bill-wave"></i> Expenses</a></li>
+        <li><a href="#"><i class="fas fa-laptop-house"></i> Assets</a></li>
+        <li><a href="#"><i class="fas fa-user-tie"></i> Staff</a></li>
+        <li><a href="#"><i class="fas fa-money-check-alt"></i> Payroll</a></li>
+        <li><a href="#"><i class="fas fa-money-check-alt"></i> Financials</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div id="statusMessage" class="status-message"></div>
+
+    <div class="control-panel">
+        <h3 style="color: var(--primary-color); margin: 0;">Expense Management</h3>
+        <div class="year-select-container">
+            <label><i class="fas fa-calendar-alt"></i> Financial Year:</label>
+            <select id="yearSelector" onchange="switchYear(this.value)">
+                <option value="2024">2024</option>
+                <option value="2025" selected>2025</option>
+                <option value="2026">2026</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="term-navigator">
+      <h2 style="color: var(--primary-color); margin-bottom: 1rem;"><i class="fas fa-calendar-alt"></i> Academic Terms - <span id="currentYearDisplay"></span></h2>
+      <div class="term-tabs" id="termTabs">
+        <div class="term-tab active" onclick="setActiveTerm('all')"><i class="fas fa-list"></i> All Terms <span class="badge" id="allTermsBadge">0</span></div>
+        <div class="term-tab" onclick="setActiveTerm('First Term')"><i class="fas fa-calendar-week"></i> First Term <span class="badge" id="firstTermBadge">0</span></div>
+        <div class="term-tab" onclick="setActiveTerm('Second Term')"><i class="fas fa-calendar-week"></i> Second Term <span class="badge" id="secondTermBadge">0</span></div>
+        <div class="term-tab" onclick="setActiveTerm('Third Term')"><i class="fas fa-calendar-week"></i> Third Term <span class="badge" id="thirdTermBadge">0</span></div>
+      </div>
+      <div class="term-overview" id="termOverview"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Add New Expense (<span id="formYearDisplay"></span>)</h2>
+      </div>
+      <form id="expenseForm">
+        <div class="grid">
+          <div class="form-group">
+            <label>Term</label>
+            <select id="term" required>
+              <option value="">-- Select Term --</option>
+              <option>First Term</option><option>Second Term</option><option>Third Term</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Description</label><input type="text" id="description" required placeholder="Expense description"></div>
+          <div class="form-group"><label>Amount (KES)</label><input type="number" id="amount" required min="0" step="0.01"></div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="category" required>
+              <option value="">-- Select Category --</option>
+              <option>Admin Expenses</option><option>Food</option><option>Fuel & Gas</option><option>Rent</option>
+              <option>Salaries</option><option>Repairs and Maintenance</option><option>Utilities</option>
+              <option>Transport</option><option>Stationary</option><option>Miscellaneous</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Date</label><input type="date" id="date" required></div>
+        </div>
+        <div style="margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-success" id="submitBtn"><i class="fas fa-plus-circle"></i> Add Expense</button>
+          <button type="reset" class="btn btn-warning"><i class="fas fa-undo"></i> Reset</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Expense Records - <span id="recordsYearDisplay"></span></h2>
+        <div class="btn-group">
+          <button class="btn btn-info" onclick="renderCharts()"><i class="fas fa-chart-pie"></i> View Charts</button>
+          <button class="btn btn-success" onclick="exportAllToExcel()"><i class="fas fa-file-excel"></i> Export All</button>
+        </div>
+      </div>
+
+      <div class="search-container">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Search by description..." oninput="loadExpenses()">
+        </div>
+        <select id="categoryFilter" class="filter-select" onchange="loadExpenses()">
+          <option value="">Filter by Category</option>
+          <option>Admin Expenses</option><option>Food</option><option>Fuel & Gas</option><option>Rent</option>
+          <option>Salaries</option><option>Repairs and Maintenance</option><option>Utilities</option>
+        </select>
+        <select id="monthFilter" class="filter-select" onchange="loadExpenses()">
+          <option value="">Filter by Month</option>
+        </select>
+      </div>
+
+      <div id="expensesSummary" class="summary-grid"></div>
+      <div id="groupedExpenses"></div>
+    </div>
+
+    <div class="chart-card">
+      <h3 class="chart-title">Expense Analysis - <span id="chartYearDisplay"></span></h3>
+      <div class="chart-container"><canvas id="categoryChart"></canvas></div>
+      <div class="chart-container"><canvas id="monthlyChart"></canvas></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <script>
+    // --- MOCK DATA SYSTEM ---
+    let currentYear = 2025;
+    let currentActiveTerm = 'all';
+    let mockExpenses = [];
+    let editingId = null;
+
+    function initMockData(year) {
+        mockExpenses = [];
+        const categories = [
+            "Salaries", "Food", "Rent", "Utilities", "Transport", 
+            "Repairs and Maintenance", "Stationary", "Admin Expenses", "Fuel & Gas"
+        ];
+        
+        // Generate realistic expenses across the year
+        // 1. Monthly Salaries (big chunks)
+        for(let m=0; m<12; m++) {
+            mockExpenses.push({
+                id: `EXP-SAL-${m}`,
+                term: getTermFromMonth(m),
+                date: getDateForMonth(year, m, 28),
+                category: "Salaries",
+                description: `Staff Salaries - ${getMonthName(m)}`,
+                amount: 150000 + Math.random()*10000
+            });
+            
+            // Utilities
+            mockExpenses.push({
+                id: `EXP-UTIL-${m}`,
+                term: getTermFromMonth(m),
+                date: getDateForMonth(year, m, 5),
+                category: "Utilities",
+                description: `Electricity & Water - ${getMonthName(m)}`,
+                amount: 5000 + Math.random()*2000
+            });
+        }
+
+        // 2. Weekly Food & Transport (smaller, frequent)
+        for(let m=0; m<12; m++) {
+            for(let w=1; w<=4; w++) {
+                if(getTermFromMonth(m) === "Holiday") continue; // Skip holidays for food
+                
+                mockExpenses.push({
+                    id: `EXP-FOOD-${m}-${w}`,
+                    term: getTermFromMonth(m),
+                    date: getDateForMonth(year, m, w*7),
+                    category: "Food",
+                    description: `Weekly Food Purchase`,
+                    amount: 8000 + Math.random()*3000
+                });
+            }
+        }
+
+        // 3. Random repairs and admin costs
+        for(let i=0; i<20; i++) {
+            const m = Math.floor(Math.random()*12);
+            mockExpenses.push({
+                id: `EXP-RAND-${i}`,
+                term: getTermFromMonth(m),
+                date: getDateForMonth(year, m, Math.floor(Math.random()*28)+1),
+                category: categories[Math.floor(Math.random()*categories.length)],
+                description: "Miscellaneous / Supplies / Repairs",
+                amount: 1000 + Math.random()*15000
+            });
+        }
+    }
+
+    // Helpers
+    function getTermFromMonth(m) {
+        if(m >= 0 && m <= 3) return "First Term"; // Jan-Apr
+        if(m >= 4 && m <= 7) return "Second Term"; // May-Aug
+        if(m >= 8 && m <= 10) return "Third Term"; // Sep-Nov
+        return "Third Term"; // Dec
+    }
+    function getDateForMonth(year, monthIndex, day) {
+        const d = new Date(year, monthIndex, day);
+        return d.toISOString().split('T')[0];
+    }
+    function getMonthName(m) {
+        return new Date(2000, m, 1).toLocaleString('default', {month:'long'});
+    }
+
+    // --- APP LOGIC ---
+
+    function switchYear(y) {
+        currentYear = parseInt(y);
+        updateYearDisplays();
+        initMockData(currentYear);
+        loadExpenses();
+        showStatus(`Switched to Financial Year ${y}`, "success");
+    }
+
+    function updateYearDisplays() {
+        ['currentYearDisplay','formYearDisplay','recordsYearDisplay','chartYearDisplay'].forEach(id => {
+            document.getElementById(id).textContent = currentYear;
+        });
+    }
+
+    function setActiveTerm(term) {
+        currentActiveTerm = term;
+        document.querySelectorAll('.term-tab').forEach(t => t.classList.remove('active'));
+        event.target.closest('.term-tab').classList.add('active');
+        loadExpenses();
+    }
+
+    function showStatus(msg, type) {
+        const el = document.getElementById('statusMessage');
+        el.textContent = msg;
+        el.className = `status-message ${type} show`;
+        setTimeout(() => el.classList.remove('show'), 4000);
+    }
+
+    function loadExpenses() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const catFilter = document.getElementById('categoryFilter').value;
+        const monthFilter = document.getElementById('monthFilter').value;
+
+        let filtered = mockExpenses.filter(e => {
+            const matchesTerm = currentActiveTerm === 'all' || e.term === currentActiveTerm;
+            const matchesSearch = e.description.toLowerCase().includes(search);
+            const matchesCat = !catFilter || e.category === catFilter;
+            const matchesMonth = !monthFilter || e.date.startsWith(monthFilter);
+            return matchesTerm && matchesSearch && matchesCat && matchesMonth;
+        });
+
+        // Sort by date desc
+        filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+        updateTermNavigator();
+        renderGroupedExpenses(filtered);
+        updateSummaryStats(filtered);
+        updateMonthFilter(filtered);
+    }
+
+    function updateTermNavigator() {
+        const stats = { 'First Term': 0, 'Second Term': 0, 'Third Term': 0 };
+        let grandTotal = 0;
+        mockExpenses.forEach(e => {
+            if(stats[e.term] !== undefined) stats[e.term]++;
+            grandTotal += e.amount;
+        });
+        
+        document.getElementById('allTermsBadge').textContent = mockExpenses.length;
+        document.getElementById('firstTermBadge').textContent = stats['First Term'];
+        document.getElementById('secondTermBadge').textContent = stats['Second Term'];
+        document.getElementById('thirdTermBadge').textContent = stats['Third Term'];
+
+        // Overview Panel
+        const container = document.getElementById('termOverview');
+        let displayCount = mockExpenses.length;
+        let displayTotal = grandTotal;
+        
+        if(currentActiveTerm !== 'all') {
+            const termExpenses = mockExpenses.filter(e => e.term === currentActiveTerm);
+            displayCount = termExpenses.length;
+            displayTotal = termExpenses.reduce((sum, e) => sum + e.amount, 0);
+        }
+
+        container.innerHTML = `
+            <div class="term-stat"><h4>Transactions</h4><div class="value">${displayCount}</div></div>
+            <div class="term-stat"><h4>Total Amount</h4><div class="value">KES ${displayTotal.toLocaleString()}</div></div>
+        `;
+    }
+
+    function renderGroupedExpenses(data) {
+        const container = document.getElementById("groupedExpenses");
+        container.innerHTML = "";
+        
+        if(data.length === 0) {
+            container.innerHTML = '<div class="status-message info show">No expenses found.</div>';
+            return;
+        }
+
+        // Group by Term -> Category
+        const grouped = {};
+        data.forEach(e => {
+            if(!grouped[e.term]) grouped[e.term] = {};
+            if(!grouped[e.term][e.category]) grouped[e.term][e.category] = [];
+            grouped[e.term][e.category].push(e);
+        });
+
+        for(let term in grouped) {
+            const termDiv = document.createElement('div');
+            termDiv.className = 'term-section';
+            termDiv.innerHTML = `<div class="term-header"><h2>${term}</h2></div>`;
+            
+            for(let cat in grouped[term]) {
+                const catDiv = document.createElement('div');
+                catDiv.className = 'category-section';
+                
+                let catTotal = 0;
+                const rows = grouped[term][cat].map(e => {
+                    catTotal += e.amount;
+                    return `<tr>
+                        <td>${e.date}</td>
+                        <td>${e.description}</td>
+                        <td>KES ${e.amount.toLocaleString()}</td>
+                        <td><button class="btn btn-sm btn-danger" onclick="deleteExpense('${e.id}')"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
+                }).join('');
+
+                catDiv.innerHTML = `
+                    <div class="category-header"><h3>${cat}</h3><span class="badge">${grouped[term][cat].length}</span></div>
+                    <div class="class-content">
+                        <table>
+                            <thead><tr><th>Date</th><th>Description</th><th>Amount</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${rows}
+                                <tr class="total-row"><td colspan="2">Total</td><td>KES ${catTotal.toLocaleString()}</td><td></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                termDiv.appendChild(catDiv);
+            }
+            container.appendChild(termDiv);
+        }
+    }
+
+    function updateSummaryStats(data) {
+        const total = data.reduce((sum, e) => sum + e.amount, 0);
+        document.getElementById('expensesSummary').innerHTML = `
+            <div class="summary-card"><h3>Total Expenses</h3><p class="amount">KES ${total.toLocaleString()}</p></div>
+            <div class="summary-card"><h3>Transactions</h3><p class="amount">${data.length}</p></div>
+        `;
+    }
+
+    function updateMonthFilter(data) {
+        const select = document.getElementById('monthFilter');
+        if(select.options.length > 1) return; // Don't reset if already populated
+        
+        const months = [...new Set(mockExpenses.map(e => e.date.substring(0, 7)))].sort();
+        months.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = new Date(m+'-01').toLocaleString('default', {month:'long', year:'numeric'});
+            select.appendChild(opt);
+        });
+    }
+
+    // --- FORM ACTIONS ---
+
+    document.getElementById('expenseForm').onsubmit = (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.innerHTML = 'Processing...';
+        
+        setTimeout(() => {
+            const newExp = {
+                id: `EXP-${Date.now()}`,
+                term: document.getElementById('term').value,
+                description: document.getElementById('description').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                category: document.getElementById('category').value,
+                date: document.getElementById('date').value
+            };
+            
+            mockExpenses.unshift(newExp); // Add to top
+            loadExpenses();
+            showStatus("Expense Added Successfully", "success");
+            e.target.reset();
+            btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Expense';
+        }, 600);
+    };
+
+    function deleteExpense(id) {
+        if(confirm("Delete this expense? (Demo)")) {
+            mockExpenses = mockExpenses.filter(e => e.id !== id);
+            loadExpenses();
+            showStatus("Expense deleted", "success");
+        }
+    }
+
+    // --- CHARTS & EXPORT ---
+
+    function renderCharts() {
+        const ctxCat = document.getElementById('categoryChart');
+        const ctxMonth = document.getElementById('monthlyChart');
+        
+        // Prepare Data
+        const catTotals = {};
+        const monthTotals = {};
+        
+        // Filter by current active term only for charts if selected
+        const dataToChart = currentActiveTerm === 'all' ? mockExpenses : mockExpenses.filter(e => e.term === currentActiveTerm);
+
+        dataToChart.forEach(e => {
+            catTotals[e.category] = (catTotals[e.category]||0) + e.amount;
+            const m = e.date.substring(0, 7);
+            monthTotals[m] = (monthTotals[m]||0) + e.amount;
+        });
+
+        if(window.catChart) window.catChart.destroy();
+        if(window.monChart) window.monChart.destroy();
+
+        window.catChart = new Chart(ctxCat, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(catTotals),
+                datasets: [{ data: Object.values(catTotals), backgroundColor: ['#005fa3','#28a745','#dc3545','#ff9800','#17a2b8','#6610f2','#e83e8c','#fd7e14'] }]
+            },
+            options: { plugins: { title: { display: true, text: 'Expenses by Category' } } }
+        });
+
+        const sortedMonths = Object.keys(monthTotals).sort();
+        window.monChart = new Chart(ctxMonth, {
+            type: 'bar',
+            data: {
+                labels: sortedMonths,
+                datasets: [{ label: 'Monthly Spend', data: sortedMonths.map(m => monthTotals[m]), backgroundColor: '#005fa3' }]
+            },
+            options: { plugins: { title: { display: true, text: 'Monthly Expenses' } } }
+        });
+
+        document.querySelector('.chart-card').scrollIntoView({behavior:'smooth'});
+    }
+
+    function exportAllToExcel() {
+        const ws = XLSX.utils.json_to_sheet(mockExpenses);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Expenses");
+        XLSX.writeFile(wb, `Expenses_${currentYear}.xlsx`);
+    }
+
+    // Init
+    window.onload = () => {
+        initMockData(currentYear);
+        updateYearDisplays();
+        loadExpenses();
+        setTimeout(() => document.getElementById('loadingScreen').classList.add('hidden'), 800);
+    };
+  </script>
+</body>
+</html>

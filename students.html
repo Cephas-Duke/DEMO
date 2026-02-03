@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Students Manager | Heriwadi Schools (Portfolio Ver.)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* PRESERVED YOUR ORIGINAL STYLES */
+    :root {
+      --primary-color: #005fa3;
+      --secondary-color: #004080;
+      --accent-color: #00a8e8;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ff9800;
+      --info-color: #17a2b8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --border-radius: 8px;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Roboto', sans-serif; background-color: #f5f7fa; color: #333; line-height: 1.6; }
+
+    /* Loading Screen for Portfolio Effect */
+    .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.5s ease; }
+    .loading-screen.hidden { opacity: 0; pointer-events: none; }
+    .loading-spinner-large { width: 50px; height: 50px; border: 5px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; margin-top: 15px; }
+
+    header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 1.5rem; text-align: center; box-shadow: var(--box-shadow); }
+    nav { background: var(--secondary-color); padding: 0.75rem 1.5rem; }
+    nav ul { list-style: none; display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; }
+    nav ul li a { color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: var(--border-radius); transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; }
+    nav ul li a:hover { background: var(--accent-color); }
+    nav ul li a.active { background: var(--accent-color); font-weight: bold; }
+
+    .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+    .term-selector { background: white; border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: 1rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .term-selector h3 { color: var(--primary-color); margin: 0; }
+    .term-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .term-btn { padding: 0.5rem 1rem; border: 2px solid var(--primary-color); background: transparent; color: var(--primary-color); border-radius: var(--border-radius); cursor: pointer; transition: var(--transition); font-weight: 500; }
+    .term-btn.active, .term-btn:hover { background: var(--primary-color); color: white; }
+    .current-term-info { background: var(--info-color); color: white; padding: 0.5rem 1rem; border-radius: var(--border-radius); font-weight: 500; }
+
+    .card { background: white; border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: 1.5rem; margin-bottom: 1.5rem; transition: var(--transition); }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid #eee; }
+    .card-title { font-size: 1.5rem; color: var(--primary-color); margin: 0; }
+
+    .btn { padding: 0.5rem 1rem; border: none; border-radius: var(--border-radius); background: var(--primary-color); color: white; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-outline { background: transparent; border: 1px solid var(--primary-color); color: var(--primary-color); }
+    .btn-outline:hover { background: var(--primary-color); color: white; }
+    .btn-success { background: var(--success-color); }
+    .btn-danger { background: var(--danger-color); }
+    .btn-warning { background: var(--warning-color); color: var(--dark-color); }
+    .btn-info { background: var(--info-color); }
+    .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.85rem; }
+    .btn-group { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--dark-color); }
+    input, select { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: var(--border-radius); font-size: 1rem; transition: var(--transition); }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.2); }
+
+    .search-container { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .search-box { position: relative; flex: 1; min-width: 250px; }
+    .search-box input { padding-left: 2.5rem; }
+    .search-box i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #777; }
+    .filter-select { min-width: 200px; }
+
+    .status-message { padding: 0.75rem 1rem; border-radius: var(--border-radius); margin-bottom: 1rem; font-weight: 500; display: none; }
+    .status-message.show { display: block; animation: fadeIn 0.5s; }
+    .status-message.success { background-color: rgba(40, 167, 69, 0.1); color: var(--success-color); border-left: 4px solid var(--success-color); }
+    .status-message.error { background-color: rgba(220, 53, 69, 0.1); color: var(--danger-color); border-left: 4px solid var(--danger-color); }
+    .status-message.info { background-color: rgba(23, 162, 184, 0.1); color: var(--info-color); border-left: 4px solid var(--info-color); }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.95rem; }
+    th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
+    th { background-color: var(--primary-color); color: white; font-weight: 500; position: sticky; top: 0; }
+    tr:hover { background-color: #f8f9fa; }
+
+    .class-section { margin-bottom: 2rem; }
+    .class-header { background-color: var(--primary-color); color: white; padding: 0.75rem 1rem; border-radius: var(--border-radius) var(--border-radius) 0 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: var(--transition); }
+    .class-header:hover { background-color: var(--secondary-color); }
+    .class-header .badge { background: white; color: var(--primary-color); padding: 0.25rem 0.5rem; border-radius: 1rem; font-size: 0.85rem; font-weight: bold; }
+    .class-content { border: 1px solid #ddd; border-top: none; border-radius: 0 0 var(--border-radius) var(--border-radius); overflow: hidden; overflow-x: auto; }
+
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease; }
+    .modal.show { display: flex; opacity: 1; }
+    .modal-content { background: white; border-radius: var(--border-radius); width: 90%; max-width: 700px; max-height: 90vh; overflow-y: auto; padding-bottom: 1rem; transform: translateY(-20px); transition: transform 0.3s ease; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); }
+    .modal.show .modal-content { transform: translateY(0); }
+    .modal-header { padding: 1rem 1.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white; z-index: 10; }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 0.75rem; background: white; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #777; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+    .fee-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .stat-item { background: white; padding: 1rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow); text-align: center; }
+    .stat-item h4 { margin-bottom: 0.5rem; color: var(--primary-color); font-size: 0.9rem; }
+    .stat-item p { font-size: 1.25rem; font-weight: bold; margin: 0; }
+
+    .student-link { color: var(--primary-color); text-decoration: none; font-weight: 500; }
+    .student-link:hover { text-decoration: underline; }
+    .positive { color: var(--success-color); }
+    .negative { color: var(--danger-color); }
+    .term-transition-card { background: linear-gradient(135deg, var(--warning-color), #ff6f00); color: white; padding: 1.5rem; border-radius: var(--border-radius); margin-bottom: 1.5rem; }
+    .term-actions .btn { background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.5); color: white; }
+    .term-actions .btn:hover { background: rgba(255, 255, 255, 0.3); }
+    .carry-forward-container { display: flex; align-items: center; gap: 0.5rem; }
+    .editable-field { border: 2px dashed #007bff; background-color: #f0f8ff; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @media (max-width: 768px) { nav ul { flex-direction: column; align-items: center; } .stats-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="loading-screen" id="loadingScreen">
+    <div style="font-size: 2rem; background: rgba(255,255,255,0.2); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+      <i class="fas fa-users"></i>
+    </div>
+    <div style="margin-top: 1rem; font-size: 1.2rem;">Loading Student Manager...</div>
+    <div class="loading-spinner-large"></div>
+  </div>
+
+  <header>
+    <h1>Heriwadi Christian Schools Ltd</h1>
+    <nav>
+      <ul>
+        <li><a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="receipts.html"><i class="fas fa-receipt"></i> Receipts</a></li>
+        <li><a href="#"><i class="fas fa-money-bill-wave"></i> Expenses</a></li>
+        <li><a href="#"><i class="fas fa-laptop-house"></i> Assets</a></li>
+        <li><a href="#"><i class="fas fa-user-tie"></i> Staff</a></li>
+        <li><a href="#" class="active"><i class="fas fa-users"></i> Students</a></li>
+        <li><a href="#"><i class="fas fa-money-check-alt"></i> Payroll</a></li>
+        <li><a href="#"><i class="fas fa-money-check-alt"></i> Financials</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="term-selector">
+      <div>
+        <h3><i class="fas fa-calendar-alt"></i> Academic Term</h3>
+        <div class="current-term-info" style="display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-calendar"></i>
+          <label for="yearSelector" style="margin: 0; cursor: pointer;">Year:</label>
+          <input type="number" id="yearSelector" class="year-input" min="2020" max="2030" value="2025" style="width: 80px; padding: 0.25rem; border: none; border-radius: 4px; font-weight: bold;">
+        </div>
+      </div>
+      <div class="term-buttons">
+        <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
+        <button class="term-btn active" data-term="2" onclick="switchTerm(2)">Term 2</button>
+        <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
+      </div>
+    </div>
+
+    <div class="term-transition-card">
+      <h3><i class="fas fa-exchange-alt"></i> Smart Term & Year Transition</h3>
+      <p>Manage both term-to-term moves and End-of-Year promotions. Overpayments are carried forward as credits.</p>
+      <div class="term-actions" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+        <button class="btn" onclick="openTermTransitionModal()"><i class="fas fa-arrow-right"></i> Start Term Transition</button>
+        <button class="btn" onclick="alert('Demo: Copy Students feature simulation')"><i class="fas fa-copy"></i> Copy Students</button>
+        <button class="btn" onclick="viewTermSummary()"><i class="fas fa-chart-line"></i> Term Summary</button>
+        <button class="btn btn-danger" onclick="openPromotionModal()" style="background-color: #dc3545; border-color: #dc3545;">
+          <i class="fas fa-calendar-check"></i> End of Year Promotion
+        </button>
+      </div>
+    </div>
+
+    <div id="statusMessage" class="status-message"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Student Registration - <span id="currentTermDisplay">Term 2</span></h2>
+      </div>
+      
+      <form id="studentForm">
+        <div class="grid">
+          <div class="form-group"><label><i class="fas fa-user-graduate"></i> Student Name</label><input type="text" id="studentName" required placeholder="John Doe"></div>
+          <div class="form-group">
+            <label><i class="fas fa-chalkboard"></i> Class</label>
+            <select id="studentClass" required>
+              <option value="">Select Class</option>
+              <option value="Play Group">Play Group</option>
+              <option value="PP1">PP1</option><option value="PP2">PP2</option>
+              <option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option>
+              <option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option>
+              <option value="Grade 5">Grade 5</option><option value="Grade 6">Grade 6</option>
+            </select>
+          </div>
+          <div class="form-group"><label><i class="fas fa-phone"></i> Phone</label><input type="tel" id="phone" placeholder="+2547..." required></div>
+          <div class="form-group">
+            <label><i class="fas fa-balance-scale"></i> Carried Forward (KES)</label>
+            <div class="carry-forward-container">
+              <input type="number" id="carriedForwardBalance" value="0" class="editable-field">
+              <button type="button" class="btn btn-sm btn-info" onclick="autoFillCarryForward()"><i class="fas fa-magic"></i></button>
+            </div>
+            <small style="color: #666;">Positive = Debt | Negative = Credit</small>
+          </div>
+        </div>
+
+        <h3 style="margin: 1.5rem 0 0.5rem;">Fee Structure</h3>
+        <div class="fee-grid">
+          <div class="form-group"><label>Tuition</label><input type="number" id="tuition" value="0"></div>
+          <div class="form-group"><label>Admission</label><input type="number" id="adm" value="0"></div>
+          <div class="form-group"><label>Assessment</label><input type="number" id="assessment" value="0"></div>
+          <div class="form-group"><label>Medical</label><input type="number" id="medical" value="0"></div>
+          <div class="form-group"><label>Uniform</label><input type="number" id="uniform" value="0"></div>
+          <div class="form-group"><label>Lunch</label><input type="number" id="lunch" value="0"></div>
+          <div class="form-group"><label>Transport</label><input type="number" id="transport" value="0"></div>
+          <div class="form-group"><label>Trip</label><input type="number" id="trip" value="0"></div>
+          <div class="form-group"><label>Co-curricular</label><input type="number" id="coCurricular" value="0"></div>
+          <div class="form-group"><label>Graduation</label><input type="number" id="graduation" value="0"></div>
+          <div class="form-group"><label>Amount Paid</label><input type="number" id="paid" value="0"></div>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-success" id="submitBtn"><i class="fas fa-save"></i> Add Student</button>
+          <button type="reset" class="btn btn-outline" onclick="resetForm()"><i class="fas fa-undo"></i> Reset</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Student Records - <span id="currentTermRecords">Term 2</span></h2>
+        <div class="btn-group">
+          <button class="btn btn-info" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Export All</button>
+          <button class="btn btn-danger" onclick="document.getElementById('importModal').classList.add('show')"><i class="fas fa-file-import"></i> Import</button>
+        </div>
+      </div>
+
+      <div class="search-container">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Search by name..." oninput="loadStudents()">
+        </div>
+        <select id="classFilter" class="filter-select" onchange="loadStudents()">
+          <option value="">Filter by Class</option>
+          <option value="Play Group">Play Group</option>
+          <option value="PP1">PP1</option><option value="PP2">PP2</option>
+          <option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option>
+          <option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option>
+          <option value="Grade 5">Grade 5</option><option value="Grade 6">Grade 6</option>
+        </select>
+      </div>
+
+      <div id="statsContainer"></div>
+      <div id="groupedTables"></div>
+    </div>
+  </div>
+
+  <div id="studentModal" class="modal"><div class="modal-content"><div class="modal-header"><h3 class="modal-title">Student Details</h3><button class="modal-close" onclick="closeModal('studentModal')">&times;</button></div><div class="modal-body" id="modalContent"></div></div></div>
+  
+  <div id="termTransitionModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Smart Term Transition</h3><button class="modal-close" onclick="closeModal('termTransitionModal')">&times;</button></div>
+      <div class="modal-body">
+        <p>Intelligent Student Data Transfer with Overpay Handling.</p>
+        <div class="grid" style="margin: 1.5rem 0;">
+          <div class="form-group"><label>From Term</label><select id="sourceTerm"><option value="1">Term 1</option><option value="2" selected>Term 2</option></select></div>
+          <div class="form-group"><label>To Term</label><select id="targetTerm"><option value="3">Term 3</option></select></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-success" onclick="executeSmartTermTransition()"><i class="fas fa-brain"></i> Execute Smart Transition</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="promotionModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header"><h3>End of Year Promotion</h3><button class="modal-close" onclick="closeModal('promotionModal')">&times;</button></div>
+      <div class="modal-body">
+        <div class="status-message warning" style="background-color: #fff3cd; color: #856404; display:block; border-left: 5px solid #ffc107;">
+          <i class="fas fa-exclamation-triangle"></i> Moves students to next class and carries forward balances.
+        </div>
+        <div id="promoProgress" style="margin-top: 15px; display: none;">
+          <div style="background-color: #e9ecef; height: 20px; width: 100%; border-radius: 5px;"><div id="promoBar" style="background-color: #28a745; height: 100%; width: 0%; border-radius: 5px; transition: width 0.5s;"></div></div>
+          <p id="promoStatusText" style="text-align: center; margin-top: 5px;">Starting...</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger" id="executePromotionBtn" onclick="executePromotion()"><i class="fas fa-random"></i> Confirm & Promote</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="termSummaryModal" class="modal"><div class="modal-content"><div class="modal-header"><h3>Term Summary</h3><button class="modal-close" onclick="closeModal('termSummaryModal')">&times;</button></div><div class="modal-body" id="termSummaryContent"></div></div></div>
+  <div id="importModal" class="modal"><div class="modal-content"><div class="modal-header"><h3>Import</h3><button class="modal-close" onclick="closeModal('importModal')">&times;</button></div><div class="modal-body"><input type="file" style="margin: 1rem 0;"><button class="btn btn-success" onclick="closeModal('importModal'); showStatus('Import simulated successfully', 'success')">Import</button></div></div></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <script>
+    // --- MOCK DATA GENERATION ---
+    let currentTerm = 2;
+    let currentYear = 2025;
+    let mockStudents = [];
+    let editingId = null;
+
+    function initMockData() {
+        const classes = ["Play Group", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"];
+        for(let i=0; i<65; i++) {
+            const cls = classes[Math.floor(Math.random() * classes.length)];
+            const tuition = 10000 + Math.floor(Math.random()*5)*1000;
+            const lunch = Math.random() > 0.4 ? 5000 : 0;
+            const transport = Math.random() > 0.6 ? 4000 : 0;
+            const coCurricular = Math.random() > 0.8 ? 1000 : 0;
+            const cf = Math.random() > 0.8 ? (Math.random() > 0.5 ? 2000 : -1500) : 0; // Debt or Credit
+
+            const total = tuition + lunch + transport + coCurricular;
+            // Payment status logic
+            let paid = 0;
+            const status = Math.random();
+            if(status > 0.6) paid = total + cf; // Paid in full
+            else if(status > 0.3) paid = Math.floor(total/2); // Paid half
+            else if(status > 0.1) paid = total + 500; // Overpaid slightly
+            else paid = 0; // Not paid
+
+            mockStudents.push({
+                id: `ST-${1000+i}`,
+                name: `Student ${i+1}`,
+                class: cls,
+                phone: `07${Math.floor(Math.random()*90000000+10000000)}`,
+                tuition, lunch, transport, coCurricular,
+                adm: 0, assessment: 0, medical: 0, uniform: 0, trip: 0, graduation: 0,
+                carriedForwardBalance: cf,
+                paid: paid,
+                term: currentTerm,
+                year: currentYear
+            });
+        }
+    }
+
+    // --- APP LOGIC ---
+
+    function switchTerm(t) {
+        currentTerm = t;
+        document.querySelectorAll('.term-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.term)===t));
+        document.getElementById('currentTermDisplay').textContent = `Term ${t}`;
+        document.getElementById('currentTermRecords').textContent = `Term ${t}`;
+        showStatus(`Switched to Term ${t} - Demo Data Reset`, "info");
+        // In a real app, we would fetch different data. In demo, we just shuffle or keep same.
+        loadStudents();
+    }
+
+    function showStatus(msg, type) {
+        const el = document.getElementById('statusMessage');
+        el.textContent = msg;
+        el.className = `status-message ${type} show`;
+        setTimeout(() => { el.classList.remove('show'); }, 4000);
+    }
+
+    function calculateBalances(s) {
+        const currentTotal = (s.tuition||0) + (s.adm||0) + (s.assessment||0) + (s.medical||0) + 
+                           (s.uniform||0) + (s.lunch||0) + (s.transport||0) + (s.trip||0) + 
+                           (s.coCurricular||0) + (s.graduation||0);
+        const currentBal = currentTotal - (s.paid||0);
+        const totalOut = currentBal + (s.carriedForwardBalance||0);
+        return { currentTotal, currentBal, totalOut };
+    }
+
+    function loadStudents() {
+        const container = document.getElementById('groupedTables');
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const clsFilter = document.getElementById('classFilter').value;
+        
+        container.innerHTML = '';
+        
+        // Filter
+        let filtered = mockStudents.filter(s => 
+            (s.name.toLowerCase().includes(search)) && 
+            (clsFilter === "" || s.class === clsFilter)
+        );
+
+        if(filtered.length === 0) {
+            container.innerHTML = '<div class="status-message info show">No students found.</div>';
+            updateStats([]);
+            return;
+        }
+
+        const classes = ["Play Group", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"];
+        
+        classes.forEach(cls => {
+            const classStudents = filtered.filter(s => s.class === cls);
+            if(classStudents.length === 0) return;
+
+            const section = document.createElement('div');
+            section.className = 'class-section';
+            section.innerHTML = `
+                <div class="class-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display==='none'?'block':'none'">
+                    <h3>${cls}</h3><span class="badge">${classStudents.length}</span>
+                </div>
+                <div class="class-content">
+                    <table>
+                        <thead><tr><th>Name</th><th>Phone</th><th>Fees</th><th>Paid</th><th>Term Bal</th><th>C/F</th><th>Total Out</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            ${classStudents.map(s => {
+                                const bal = calculateBalances(s);
+                                return `<tr>
+                                    <td><a href="#" class="student-link" onclick="viewStudent('${s.id}')">${s.name}</a></td>
+                                    <td>${s.phone}</td>
+                                    <td>${bal.currentTotal.toLocaleString()}</td>
+                                    <td class="positive">${s.paid.toLocaleString()}</td>
+                                    <td class="${bal.currentBal>0?'negative':'positive'}">${bal.currentBal.toLocaleString()}</td>
+                                    <td class="${s.carriedForwardBalance>0?'negative':''}">${s.carriedForwardBalance.toLocaleString()}</td>
+                                    <td class="${bal.totalOut>0?'negative':'positive'}" style="font-weight:bold">${bal.totalOut.toLocaleString()}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" onclick="editStudent('${s.id}')"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.appendChild(section);
+        });
+        updateStats(filtered);
+    }
+
+    function updateStats(students) {
+        let totalFees=0, totalPaid=0, totalOut=0, credits=0, debts=0;
+        students.forEach(s => {
+            const b = calculateBalances(s);
+            totalFees += b.currentTotal;
+            totalPaid += s.paid;
+            totalOut += b.totalOut;
+            if(b.totalOut < 0) credits += Math.abs(b.totalOut);
+            else debts += b.totalOut;
+        });
+
+        document.getElementById('statsContainer').innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-item"><h4>Total Students</h4><p>${students.length}</p></div>
+                <div class="stat-item"><h4>Total Fees</h4><p>KES ${totalFees.toLocaleString()}</p></div>
+                <div class="stat-item"><h4>Total Paid</h4><p class="positive">KES ${totalPaid.toLocaleString()}</p></div>
+                <div class="stat-item"><h4>Net Outstanding</h4><p class="${totalOut>0?'negative':'positive'}">KES ${Math.abs(totalOut).toLocaleString()}</p></div>
+                <div class="stat-item"><h4>Total Debt</h4><p class="negative">KES ${debts.toLocaleString()}</p></div>
+                <div class="stat-item"><h4>Total Credit</h4><p class="positive">KES ${credits.toLocaleString()}</p></div>
+            </div>
+        `;
+    }
+
+    // --- FORM ACTIONS ---
+
+    document.getElementById('studentForm').onsubmit = (e) => {
+        e.preventDefault();
+        const cf = parseFloat(document.getElementById('carriedForwardBalance').value)||0;
+        const paid = parseFloat(document.getElementById('paid').value)||0;
+        
+        // Collect fees
+        const fees = {};
+        ['tuition','adm','assessment','medical','uniform','lunch','transport','trip','coCurricular','graduation'].forEach(id => {
+            fees[id] = parseFloat(document.getElementById(id).value)||0;
+        });
+
+        const newS = {
+            id: editingId || `ST-${Date.now()}`,
+            name: document.getElementById('studentName').value,
+            class: document.getElementById('studentClass').value,
+            phone: document.getElementById('phone').value,
+            carriedForwardBalance: cf,
+            paid: paid,
+            ...fees,
+            term: currentTerm, year: currentYear
+        };
+
+        if(editingId) {
+            const idx = mockStudents.findIndex(s => s.id === editingId);
+            mockStudents[idx] = newS;
+            showStatus("Student updated successfully", "success");
+        } else {
+            mockStudents.push(newS);
+            showStatus("Student added successfully", "success");
+        }
+        
+        resetForm();
+        loadStudents();
+    };
+
+    function editStudent(id) {
+        const s = mockStudents.find(x => x.id === id);
+        if(!s) return;
+        editingId = id;
+        document.getElementById('studentName').value = s.name;
+        document.getElementById('studentClass').value = s.class;
+        document.getElementById('phone').value = s.phone;
+        document.getElementById('carriedForwardBalance').value = s.carriedForwardBalance;
+        document.getElementById('paid').value = s.paid;
+        
+        ['tuition','adm','assessment','medical','uniform','lunch','transport','trip','coCurricular','graduation'].forEach(k => {
+            document.getElementById(k).value = s[k] || 0;
+        });
+
+        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        document.getElementById('studentForm').scrollIntoView({behavior:'smooth'});
+    }
+
+    function deleteStudent(id) {
+        if(confirm('Delete student? (Demo)')) {
+            mockStudents = mockStudents.filter(s => s.id !== id);
+            loadStudents();
+            showStatus('Student deleted', 'success');
+        }
+    }
+
+    function resetForm() {
+        editingId = null;
+        document.getElementById('studentForm').reset();
+        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Add Student';
+    }
+
+    function autoFillCarryForward() {
+        // Simulating finding previous term data
+        const val = Math.random() > 0.5 ? 2000 : -500;
+        document.getElementById('carriedForwardBalance').value = val;
+        showStatus(`Found previous balance: ${val}`, 'info');
+    }
+
+    // --- VIEW & MODALS ---
+
+    function viewStudent(id) {
+        const s = mockStudents.find(x => x.id === id);
+        const bal = calculateBalances(s);
+        const modal = document.getElementById('studentModal');
+        const content = document.getElementById('modalContent');
+        content.innerHTML = `
+            <h3>${s.name} <small>(${s.class})</small></h3>
+            <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin:10px 0;">
+                <p><strong>Tuition:</strong> ${s.tuition}</p>
+                <p><strong>Lunch:</strong> ${s.lunch}</p>
+                <p><strong>Transport:</strong> ${s.transport}</p>
+                <p><strong>Co-Curricular:</strong> ${s.coCurricular}</p>
+                <hr>
+                <p><strong>Total Fees:</strong> ${bal.currentTotal.toLocaleString()}</p>
+                <p><strong>Paid:</strong> ${s.paid.toLocaleString()}</p>
+                <p><strong>Carried Forward:</strong> ${s.carriedForwardBalance.toLocaleString()}</p>
+                <h4 style="margin-top:10px; color:${bal.totalOut>0?'red':'green'}">Total Outstanding: ${bal.totalOut.toLocaleString()}</h4>
+            </div>
+        `;
+        modal.classList.add('show');
+    }
+
+    function viewTermSummary() {
+        const modal = document.getElementById('termSummaryModal');
+        modal.classList.add('show');
+        // Simple summary logic for demo
+        let html = `<h4>Term ${currentTerm} Class Breakdown</h4><table style="width:100%"><thead><tr><th>Class</th><th>Students</th><th>Outstanding</th></tr></thead><tbody>`;
+        const classes = ["Play Group", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"];
+        classes.forEach(cls => {
+            const st = mockStudents.filter(s => s.class === cls);
+            const out = st.reduce((acc, s) => acc + calculateBalances(s).totalOut, 0);
+            html += `<tr><td>${cls}</td><td>${st.length}</td><td>${out.toLocaleString()}</td></tr>`;
+        });
+        html += `</tbody></table>`;
+        document.getElementById('termSummaryContent').innerHTML = html;
+    }
+
+    // --- SIMULATIONS ---
+
+    function executeSmartTermTransition() {
+        const btn = document.querySelector('#termTransitionModal .btn-success');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        setTimeout(() => {
+            btn.innerHTML = 'Execute Smart Transition';
+            closeModal('termTransitionModal');
+            showStatus("Smart Transition Completed! Overpayments carried forward.", "success");
+            switchTerm(3); // Auto switch for demo effect
+        }, 1500);
+    }
+
+    function executePromotion() {
+        const btn = document.getElementById('executePromotionBtn');
+        const progress = document.getElementById('promoProgress');
+        const bar = document.getElementById('promoBar');
+        
+        btn.disabled = true;
+        progress.style.display = 'block';
+        
+        let width = 0;
+        const interval = setInterval(() => {
+            width += 5;
+            bar.style.width = width + '%';
+            if(width >= 100) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    closeModal('promotionModal');
+                    progress.style.display = 'none';
+                    bar.style.width = '0%';
+                    btn.disabled = false;
+                    alert("Promotion Successful! Students moved to next year.");
+                }, 500);
+            }
+        }, 50);
+    }
+
+    function exportToExcel() {
+        const data = mockStudents.map(s => {
+            const b = calculateBalances(s);
+            return { Name: s.name, Class: s.class, TotalFees: b.currentTotal, Paid: s.paid, Balance: b.totalOut };
+        });
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Students");
+        XLSX.writeFile(wb, "Students_Demo.xlsx");
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    function openTermTransitionModal() { document.getElementById('termTransitionModal').classList.add('show'); }
+    function openPromotionModal() { document.getElementById('promotionModal').classList.add('show'); }
+
+    // Init
+    window.onload = () => {
+        initMockData();
+        loadStudents();
+        setTimeout(() => document.getElementById('loadingScreen').classList.add('hidden'), 800);
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial Dashboard | Heriwadi Christian Schools (Demo)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary-color: #005fa3;
+      --secondary-color: #004080;
+      --accent-color: #00a8e8;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --border-radius: 12px;
+      --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; color: #333; line-height: 1.6; }
+
+    /* Portfolio Loading Screen */
+    .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--secondary-color), var(--primary-color)); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; transition: opacity 0.5s ease; }
+    .loading-screen.hidden { opacity: 0; pointer-events: none; }
+    .spinner { width: 50px; height: 50px; border: 5px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; margin-bottom: 20px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 1.5rem; text-align: center; box-shadow: var(--box-shadow); }
+    nav { background: var(--secondary-color); padding: 0.75rem 1.5rem; }
+    nav ul { list-style: none; display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; }
+    nav ul li a { color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; }
+    nav ul li a:hover { background: var(--accent-color); }
+    nav ul li a.active { background: var(--accent-color); font-weight: bold; }
+
+    .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+
+    .top-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; background: white; padding: 1.25rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow); flex-wrap: wrap; gap: 1rem; }
+    .selector-group { display: flex; gap: 1rem; align-items: center; }
+    select { padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid #ddd; font-weight: 500; color: var(--secondary-color); outline: none; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .stat-card { background: white; padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow); display: flex; align-items: center; gap: 1.25rem; transition: transform 0.3s ease; }
+    .stat-card:hover { transform: translateY(-5px); }
+    .stat-icon { width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white; }
+    .stat-info h3 { font-size: 0.9rem; color: #777; margin-bottom: 0.25rem; text-transform: uppercase; }
+    .stat-info .value { font-size: 1.4rem; font-weight: 700; color: var(--dark-color); }
+
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    @media (max-width: 600px) { .charts-grid { grid-template-columns: 1fr; } }
+    .chart-card { background: white; padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow); }
+    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+
+    .report-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .action-btn { padding: 1rem; border-radius: var(--border-radius); border: none; color: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; transition: var(--transition); font-weight: 600; }
+    .action-btn i { font-size: 1.5rem; }
+    .btn-revenue { background-color: var(--primary-color); }
+    .btn-tax { background-color: var(--danger-color); }
+    .btn-audit { background-color: var(--success-color); }
+    .action-btn:hover { opacity: 0.9; transform: scale(1.02); }
+
+    .summary-table-card { background: white; border-radius: var(--border-radius); box-shadow: var(--box-shadow); overflow: hidden; margin-bottom: 2rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background-color: #f8f9fa; padding: 1rem; text-align: left; color: var(--secondary-color); font-weight: 600; border-bottom: 2px solid #eee; }
+    td { padding: 1rem; border-bottom: 1px solid #eee; }
+    .trend-up { color: var(--success-color); }
+    .trend-down { color: var(--danger-color); }
+  </style>
+</head>
+<body>
+
+  <div class="loading-screen" id="loadingScreen">
+    <div class="spinner"></div>
+    <p>Generating Financial Intelligence...</p>
+  </div>
+
+  <header>
+    <h1>Heriwadi Christian Schools Ltd</h1>
+    <nav>
+      <ul>
+        <li><a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="students.html"><i class="fas fa-users"></i> Students</a></li>
+        <li><a href="receipts.html"><i class="fas fa-receipt"></i> Receipts</a></li>
+        <li><a href="expense.html"><i class="fas fa-money-bill-wave"></i> Expenses</a></li>
+        <li><a href="#" class="active"><i class="fas fa-chart-line"></i> Financials</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="top-controls">
+      <div class="selector-group">
+        <label><i class="fas fa-calendar"></i> Year:</label>
+        <select id="yearSelect" onchange="refreshFinancials()">
+          <option value="2024">2024</option>
+          <option value="2025" selected>2025</option>
+          <option value="2026">2026</option>
+        </select>
+        <label><i class="fas fa-clock"></i> Period:</label>
+        <select id="termSelect" onchange="refreshFinancials()">
+          <option value="1">Term 1</option>
+          <option value="2">Term 2</option>
+          <option value="3">Term 3</option>
+          <option value="annual" selected>Full Year (Annual)</option>
+        </select>
+      </div>
+      <div class="selector-group">
+        <span id="lastUpdated" style="font-size: 0.85rem; color: #777;"></span>
+        <button onclick="refreshFinancials()" style="background: none; border: none; color: var(--primary-color); cursor: pointer;"><i class="fas fa-sync-alt"></i></button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background-color: var(--primary-color);"><i class="fas fa-hand-holding-usd"></i></div>
+        <div class="stat-info">
+          <h3>Total Revenue</h3>
+          <div class="value" id="revVal">KES 0</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background-color: var(--danger-color);"><i class="fas fa-file-invoice-dollar"></i></div>
+        <div class="stat-info">
+          <h3>Total Expenses</h3>
+          <div class="value" id="expVal">KES 0</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background-color: var(--success-color);"><i class="fas fa-piggy-bank"></i></div>
+        <div class="stat-info">
+          <h3>Net Profit</h3>
+          <div class="value" id="profitVal">KES 0</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background-color: var(--warning-color);"><i class="fas fa-percentage"></i></div>
+        <div class="stat-info">
+          <h3>Margin</h3>
+          <div class="value" id="marginVal">0%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-actions">
+      <button class="action-btn btn-revenue" onclick="exportExcel('revenue')">
+        <i class="fas fa-file-excel"></i>
+        <span>Accountant's Report</span>
+      </button>
+      <button class="action-btn btn-tax" onclick="exportExcel('tax')">
+        <i class="fas fa-calculator"></i>
+        <span>Tax Summary (KRA)</span>
+      </button>
+      <button class="action-btn btn-audit" onclick="exportExcel('audit')">
+        <i class="fas fa-clipboard-check"></i>
+        <span>Audit Ledger</span>
+      </button>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-header"><h3>Revenue vs Expenses</h3></div>
+        <canvas id="mainChart" height="250"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><h3>Expense Distribution</h3></div>
+        <canvas id="expenseChart" height="250"></canvas>
+      </div>
+    </div>
+
+    <div class="summary-table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Term / Month</th>
+            <th>Revenue</th>
+            <th>Expenses</th>
+            <th>Net Cash Flow</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="financialTableBody">
+          </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    // --- FINANCIAL SIMULATION ENGINE ---
+    let revenueData = [];
+    let expenseData = [];
+
+    function generateMockFinancials(year) {
+        revenueData = [];
+        expenseData = [];
+        const terms = [1, 2, 3];
+        const categories = ["Salaries", "Food", "Rent", "Utilities", "Fuel", "Maintenance"];
+        
+        terms.forEach(t => {
+            // Simulate Student Income
+            const termRevenue = 800000 + Math.random() * 400000;
+            revenueData.push({ term: t, amount: termRevenue, label: `Term ${t}` });
+
+            // Simulate Categorized Expenses
+            categories.forEach(cat => {
+                expenseData.push({
+                    term: t,
+                    category: cat,
+                    amount: (cat === "Salaries") ? 450000 : 20000 + Math.random() * 50000,
+                    year: year
+                });
+            });
+        });
+    }
+
+    function refreshFinancials() {
+        const year = document.getElementById('yearSelect').value;
+        const term = document.getElementById('termSelect').value;
+        generateMockFinancials(year);
+        updateUI(term);
+    }
+
+    function updateUI(termMode) {
+        let displayRev = 0, displayExp = 0;
+        
+        if (termMode === 'annual') {
+            displayRev = revenueData.reduce((s, r) => s + r.amount, 0);
+            displayExp = expenseData.reduce((s, e) => s + e.amount, 0);
+        } else {
+            displayRev = revenueData.find(r => r.term == termMode).amount;
+            displayExp = expenseData.filter(e => e.term == termMode).reduce((s, e) => s + e.amount, 0);
+        }
+
+        const profit = displayRev - displayExp;
+        const margin = (profit / displayRev) * 100;
+
+        document.getElementById('revVal').textContent = `KES ${displayRev.toLocaleString()}`;
+        document.getElementById('expVal').textContent = `KES ${displayExp.toLocaleString()}`;
+        document.getElementById('profitVal').textContent = `KES ${profit.toLocaleString()}`;
+        document.getElementById('profitVal').style.color = profit >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+        document.getElementById('marginVal').textContent = `${margin.toFixed(1)}%`;
+        document.getElementById('lastUpdated').textContent = `Last Sync: ${new Date().toLocaleTimeString()}`;
+
+        renderCharts(termMode);
+        renderTable(termMode);
+    }
+
+    let mainChart, expenseChart;
+
+    function renderCharts(termMode) {
+        const ctxMain = document.getElementById('mainChart').getContext('2d');
+        const ctxExp = document.getElementById('expenseChart').getContext('2d');
+
+        if (mainChart) mainChart.destroy();
+        if (expenseChart) expenseChart.destroy();
+
+        // Main Chart (Bar)
+        const labels = termMode === 'annual' ? ['Term 1', 'Term 2', 'Term 3'] : [`Term ${termMode}`];
+        const revs = termMode === 'annual' ? revenueData.map(r => r.amount) : [revenueData.find(r => r.term == termMode).amount];
+        const exps = termMode === 'annual' ? 
+            [1,2,3].map(t => expenseData.filter(e => e.term == t).reduce((s,e) => s+e.amount, 0)) : 
+            [expenseData.filter(e => e.term == termMode).reduce((s,e) => s+e.amount, 0)];
+
+        mainChart = new Chart(ctxMain, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Revenue', data: revs, backgroundColor: '#005fa3' },
+                    { label: 'Expenses', data: exps, backgroundColor: '#dc3545' }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Expense Chart (Doughnut)
+        const relevantExp = termMode === 'annual' ? expenseData : expenseData.filter(e => e.term == termMode);
+        const cats = [...new Set(relevantExp.map(e => e.category))];
+        const catData = cats.map(c => relevantExp.filter(e => e.category === c).reduce((s,e) => s+e.amount, 0));
+
+        expenseChart = new Chart(ctxExp, {
+            type: 'doughnut',
+            data: {
+                labels: cats,
+                datasets: [{ data: catData, backgroundColor: ['#005fa3', '#28a745', '#ffc107', '#17a2b8', '#dc3545', '#6610f2'] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    function renderTable(termMode) {
+        const body = document.getElementById('financialTableBody');
+        body.innerHTML = '';
+        
+        const rows = termMode === 'annual' ? [1, 2, 3] : [parseInt(termMode)];
+        
+        rows.forEach(t => {
+            const r = revenueData.find(x => x.term == t).amount;
+            const e = expenseData.filter(x => x.term == t).reduce((s, x) => s + x.amount, 0);
+            const net = r - e;
+            
+            body.innerHTML += `
+                <tr>
+                    <td><strong>Term ${t}</strong></td>
+                    <td>KES ${r.toLocaleString()}</td>
+                    <td>KES ${e.toLocaleString()}</td>
+                    <td class="${net >= 0 ? 'trend-up' : 'trend-down'}">KES ${net.toLocaleString()}</td>
+                    <td><span style="background:${net >= 0 ? '#d4edda':'#f8d7da'}; color:${net >= 0 ? '#155724':'#721c24'}; padding:4px 8px; border-radius:4px; font-size:0.8rem;">
+                        ${net >= 0 ? 'Surplus' : 'Deficit'}</span>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function exportExcel(type) {
+        const year = document.getElementById('yearSelect').value;
+        const wb = XLSX.utils.book_new();
+        
+        const data = expenseData.map(e => ({
+            Year: year,
+            Term: e.term,
+            Category: e.category,
+            Amount: e.amount
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, "Financial Data");
+        XLSX.writeFile(wb, `Heriwadi_${type}_Report_${year}.xlsx`);
+    }
+
+    window.onload = () => {
+        refreshFinancials();
+        setTimeout(() => {
+            document.getElementById('loadingScreen').classList.add('hidden');
+        }, 1000);
+    };
+  </script>
+</body>
+</html>
